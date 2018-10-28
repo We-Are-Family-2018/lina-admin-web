@@ -1,0 +1,25 @@
+.cmm-div-container {
+    padding: 20px 10px;
+}
+
+.cmm-layer-container {
+    padding: 20px 10px;
+    height: 85%;
+    margin-right: 20px
+}
+
+
+.cmm-contour {
+    border-color:#e6e6e6;
+    border-width:1px;
+	border-style:solid;
+	border-radius:2px 0 0 2px;
+}
+
+.cmm-full-width {
+    width: 100%;
+}
+
+.cmm-full-height {
+    height: 100%;
+}

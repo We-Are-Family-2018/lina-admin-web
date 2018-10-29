@@ -67,7 +67,7 @@
           </div>
           <div class="layui-btn-container">
             <button class="layui-btn" data-type="addBook">上架书籍</button>
-            <button class="layui-btn layui-btn-danger">批量下架</button>
+            <!-- <button class="layui-btn layui-btn-danger">批量下架</button> -->
           </div>
           <div>
             <table class="layui-hide" id="LAY_table_book" lay-filter="book"></table>
@@ -89,31 +89,64 @@
 <script>
 
 //JavaScript代码区域
-layui.use('element', function(){
-  var element = layui.element;
-  
-});
-
 layui.use(['table', 'form', 'laytpl', 'upload'], function(){
   var table = layui.table;
   var form = layui.form;
   var laytpl = layui.laytpl;
   var upload = layui.upload;
 
+  // 初始化图片上传
+  // config成员：
+  // elem: 上传按钮选择器
+  // preView: 预览选择器
+  // data: 上传时额外的参数
+  // success: 上传成功回调
+  // fail: 上传失败回调
+  function initUpload(config) {
+    var uploadInst = upload.render({
+            elem: config.elem
+            ,url: apiUrl.imgUpload
+            ,accept: 'images'
+            ,exts: 'jpg|png|jpeg|gif|bmp'
+            ,acceptMime: 'image/*'
+            ,data: config.data
+            ,before: function(obj){
+              //预读本地文件示例，不支持ie8
+              obj.preview(function(index, file, result){
+                $(config.preView).attr('src', result); //图片链接（base64）
+              });
+            }
+            ,done: function(res){
+              //如果上传失败
+              if(res.code > 0){
+                config.fail(res);
+              }
+              //上传成功
+              else {
+                config.success(res);
+              }
+            }
+          });
+    return uploadInst;
+  }
+
   //监听工具条
   table.on('tool(book)', function(obj){
     var data = obj.data;
+    // 下架按钮按下
     if(obj.event === 'del'){
-      layer.confirm('真的删除行么', function(index){
+      // 弹出询问框
+      layer.confirm('你真的下架这本书吗？', function(index){
         obj.del();
         layer.close(index);
       });
-    } else if(obj.event === 'edit'){
-      //layer.alert('编辑行：<br>'+ JSON.stringify(data))
+    } 
+    // 编辑按钮按下
+    else if(obj.event === 'edit'){
+      // 渲染表单模板
       var t = editBookTpl.innerHTML;
       var s = laytpl(t).render(data);
-      console.log(s);
-      var strForm = '<form class="layui-form" lay-filter="editBookForm"><div class="layui-form-item"><label class="layui-form-label">书籍名</label><div class="layui-input-block"><input type="text" name="bookName" autocomplete="off" class="layui-input"></div></div><div class="layui-form-item"><label class="layui-form-label" name="autherNameTitle">书籍名</label><div class="layui-input-block"><p name="autherName"></p></div></div></form>'
+      // console.log(s);
       layer.open({
         type: 1
         ,offset: 'auto'
@@ -122,35 +155,42 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
         ,btn: ['保存', '取消']
         ,btnAlign: 'c'
         ,success: function() {
+          // 填充图书类型下拉项
           var selectType = $('#editBookType');
           bookTypes.forEach(function(value, index, array){
             var option = $("<option>").val(value.typeCode).text(value.description);
             selectType.append(option);
             });
-          
-          selectType.val(data.bookType);
+          // 选中当前图书类型
+          var typeCode = findBookTypeCode(data.bookType);
+          selectType.val(typeCode);
+          // 重渲染
           form.render('select', 'editBookForm');
         }
         ,yes: function(index, layero) {
-          var submit=$("#editSubmit");
+          var submit = $("#editSubmit");
           form.on('submit(editBookSubmit)', function(data){
             console.log(data);
             var loadIndex = layer.load(2);
-            // 提交操作，后期应该换成ajax
-            setTimeout(function(){
+            layer.close(index);
+            $.ajax(apiUrl.updateBook, {
+              data: data.field
+              ,type: 'post'
+              ,success: function(data) {
                 layer.close(loadIndex);
                 layer.msg("提交成功", {icon: 1, time: 1000});
-              }, 1500)
-            layer.close(index);
+              }
+              ,error: function(data) {
+                layer.close(loadIndex);
+                layer.msg('提交失败，请稍后重试');
+              }
+            })
             return false;
           })
           submit.trigger('click');
         }
       })
     } else if (obj.event === 'viewImg') {
-      // showImg(obj.data.img);
-      //layer.open('<img src="' + obj.data.img + '">');
-      var img = '<img id="view-img" src="' + obj.data.img + '"/>'
       var imgHtml = laytpl(viewRawImgTpl.innerHTML).render(data);
       var imgIndex = layer.open({
         type: 1
@@ -159,49 +199,30 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
         ,id: 'viewImg'
         ,area:['auto','auto']
         ,content: imgHtml
-        //,content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;"><br><img src="' + obj.data.img + '" style="display:block;"/><br></div>'
-        //,content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">你知道吗？亲！<br>layer ≠ layui<br><br>layer只是作为Layui的一个弹层模块，由于其用户基数较大，所以常常会有人以为layui是layerui<br><br>layer虽然已被 Layui 收编为内置的弹层模块，但仍然会作为一个独立组件全力维护、升级。<br><br>我们此后的征途是星辰大海 ^_^</div>'
         ,btn: ['上传新的封面', '关闭']
         ,btnAlign: 'c'
-        ,yes: function(index, layero) {
-          
-          //普通图片上传
-          var uploadInst = upload.render({
+        ,success: function() {
+          // 初始化上传
+          initUpload({
             elem: '#uploadImg'
-            ,url: '/upload/'
-            ,accept: 'images'
-            ,exts: 'jpg|png|jpeg|gif|bmp'
-            ,acceptMime: 'image/*'
+            ,preView: '#rawImg'
             ,data: {
               bookId: obj.data.bookId
             }
-            ,before: function(obj){
-              //预读本地文件示例，不支持ie8
-              obj.preview(function(index, file, result){
-                $('#rawImg').attr('src', result); //图片链接（base64）
-              });
-            }
-            ,done: function(res){
-              console.log(data.img);
-              //如果上传失败
-              if(res.code > 0){
-                return layer.msg('上传失败');
-              }
+            ,success: function(res) {
+              // console.log(res);
               //上传成功
               obj.update({
-                img: 'data/img/timg.jpg',
-                });
-            }
-            ,error: function(){
-               
-              //演示失败状态，并实现重传
-              var demoText = $('#demoText');
-              demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
-              demoText.find('.demo-reload').on('click', function(){
-                uploadInst.upload();
+                img: res.img,
               });
+              layer.msg('新封面上传成功', {icon: 1, time: 1000});
+            }
+            ,fail: function(res) {
+              layer.msg('上传失败，请稍后重试');
             }
           });
+        }
+        ,yes: function(index, layero) {
           $('#uploadImg').trigger('click');
         }
       });
@@ -214,8 +235,8 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
     ,url: 'data/book.json'
     ,title: '商品数据表'
     ,cols: [[
-      {checkbox: true, fixed: true}
-      ,{field:'bookId', title: '编号', width:80, sort: true, fixed: true}
+      // {checkbox: true, fixed: true}
+      {field:'bookId', title: '编号', width:80, sort: true, fixed: true}
       ,{field:'img', title: '书籍封面', width:120, templet:'#viewImgTpl'}
       ,{field:'bookName', title: '书籍名', width:150, sort: true}
       ,{field:'bookAuthor', title: '作者', width:130, sort: true}
@@ -262,6 +283,21 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
             });
 
           form.render('select', 'addBookForm');
+
+          // 初始化上传
+          initUpload({
+            elem: '#uploadImg'
+            ,preView: '#rawImg'
+            ,success: function(res) {
+              // url回填
+              $('#bookImg').val(res.img);
+              //上传成功
+              layer.msg('封面上传成功', {icon: 1, time: 1000});
+            }
+            ,fail: function(res) {
+              layer.msg('上传失败，请稍后重试');
+            }
+          });
         }
         ,yes: function(index, layero) {
           var submit=$("#addSubmit");
@@ -280,6 +316,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
       })
     }
   };
+  
   
   $('.bookTable .layui-btn').on('click', function(){
     var type = $(this).data('type');
@@ -394,10 +431,9 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
         <input id="bookImg" class="layui-hide" type="text" lay-verify="required" name="bookImg" placeholder="例如：44.00" autocomplete="off" class="layui-input">
         <div class="layui-upload layui-input-block">
           <div class="layui-upload-list">
-            <img class="layui-upload-img" id="demo1" style="width:96px; height:96px">
-            <p id="demoText"></p>
+            <img class="layui-upload-img" id="rawImg" style="width:96px; height:96px">
           </div>
-          <button type="button" class="layui-btn" id="test1">上传图片</button> 
+          <button type="button" class="layui-btn" id="uploadImg">上传图片</button> 
         </div> 
       </div>
       <button id="addSubmit" class="layui-btn layui-hide" lay-submit="" lay-filter="addBookSubmit" >立即提交</button>

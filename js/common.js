@@ -25,6 +25,16 @@ var bookTypes = [
     }
 ]
 
+function findBookTypeCode(description) {
+    var code = '';
+    bookTypes.forEach(function(value, index, array){
+        if (value.description === description) {
+            code = value.typeCode;
+        }
+    });
+    return code;
+}
+
 // 初始化
 layui.use(['form'], function() {
     var form = layui.form;

@@ -1,4 +1,4 @@
-var apiBasePath = 'http://localhost:10001/data/addBook'
+var apiBasePath = 'http://localhost:8080'
 
 var bookTypeSet = [
     '哲学'
@@ -73,6 +73,10 @@ var apiUrl = {
     //  count：数据总数量（用于表格分页）
     //  data：结果数据集
     searchBook: 'data/book.json'
-    ,imgUpload: 'http://localhost:8080/uploadImg'
-    ,updateBook: 'http://localhost:8080/updateBook'
+    ,imgUpload: 'http://localhost:8080/managerWeb/uploadBookImg'
+    ,updateBook: 'http://localhost:8080/managerWeb/updateBook'
+    ,addBook: 'http://localhost:8080/managerWeb/addBook'
+    ,deleteBook: 'http://localhost:8080/managerWeb/deleteBook'
+    ,searchOrder: ''
+    ,updateOrder: ''
 }

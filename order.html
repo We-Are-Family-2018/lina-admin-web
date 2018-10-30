@@ -29,13 +29,13 @@
     <div class="layui-side-scroll">
       <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
       <ul class="layui-nav layui-nav-tree"  lay-filter="test">
-        <li class="layui-nav-item layui-nav-itemed">
+        <li class="layui-nav-item">
           <a class="" href="index.html">商品管理</a>
         </li>
         <li class="layui-nav-item">
           <a href="user.html">用户管理</a>
         </li>
-        <li class="layui-nav-item"><a href="order.html">订单管理</a></li>
+        <li class="layui-nav-item layui-nav-itemed"><a href="order.html">订单管理</a></li>
       </ul>
     </div>
   </div>
@@ -47,30 +47,22 @@
       <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
       </fieldset>
       <div class="site-text site-block">
-        <div >
-            <form class="layui-form">
+        <div class="demoTable">
+            <div class="layui-form" lay-filter="searchOrderForm">
               <div class="layui-form-item">
                 <label class="layui-form-label">订单状态：</label>
                 <div class="layui-input-inline" style="width: 200px">
-                    <select name="orderStatus" lay-verify="" lay-filter="orderFilter" event="filterOrder">
+                    <select id="orderStatusSelect" name="orderStatus" lay-verify="" lay-filter="orderFilter" event="filterOrder">
                       <option value="">全部订单</option>
-                      <option value="0">未发货</option>
-                      <option value="1">已发货</option>
-                      <option value="2">确认收货</option>
-                      <option value="3">申请退货</option>
-                      <option value="4">退货完成</option>
-                      <option value="5">申请换货</option>
-                      <option value="6">换货中</option>
                     </select>     
                 </div>
                 <div class="layui-input-inline">
-                  <button class="layui-btn" lay-submit="" lay-filter="orderFilterSubmit">筛选</button>
+                  <button class="layui-btn" lay-filter="orderFilterSubmit" data-type="reload">筛选</button>
                 </div>
               </div>
-            </form>
-        </div>
-        <div class="demoTable">
-          <table class="layui-hide" id="order-table" lay-filter="order"></table>
+            </div>
+        
+            <table class="layui-hide" id="order-table" lay-filter="orderTable"></table>
         </div>
       </div>
     </div>
@@ -84,6 +76,7 @@
 <script src="js/jquery-3.3.1.js"></script>
 <script src="layui/layui.all.js"></script>
 <script src="js/api.js"></script>
+<script src="js/common.js"></script>
 <script>
 
 //JavaScript代码区域
@@ -92,9 +85,22 @@ layui.use('element', function(){
   
 });
 
-layui.use(['table', 'form'], function(){
+layui.use(['table', 'form', 'layer'], function(){
+  var $ = layui.$;
   var table = layui.table;
   var form = layui.form;
+  var layer = layui.layer;
+
+  function initSearchOrderStatusSelect() {
+      var selectType = $('#orderStatusSelect');
+      orderStatus.forEach(function(value, index, array){
+          var option = $("<option>").val(value.code).text(value.description);
+          selectType.append(option);
+          });
+      form.render('select', 'searchOrderForm');
+  }
+  
+  initSearchOrderStatusSelect(); 
 
   //方法级渲染
   table.render({
@@ -111,49 +117,54 @@ layui.use(['table', 'form'], function(){
       ,{field:'orderStatus', title: '状态', sort: true}
       ,{fixed:'right', title:'操作', toolbar: '#toolBar', width:200}
     ]]
-    ,id: 'testReload'
+    ,id: 'orderTable'
     ,page: true
     ,height: 'auto'
   });
 
   //监听工具条
-  table.on('tool(book)', function(obj){
+  table.on('tool(orderTable)', function(obj){
     var data = obj.data;
-    if(obj.event === 'del'){
-      layer.confirm('真的删除行么', function(index){
-        obj.del();
-        layer.close(index);
-      });
-    } else if(obj.event === 'edit'){
-      layer.alert('编辑行：<br>'+ JSON.stringify(data))
-    } else if (obj.event === 'viewImg') {
-      // showImg(obj.data.img);
-      //layer.open('<img src="' + obj.data.img + '">');
-      var img = '<img id="view-img" src="' + obj.data.img + '"/>'
-      var imgIndex = layer.open({
-        type: 1
-        ,offset: 'auto'
-        ,title: '书籍封面'
-        ,id: 'viewImg'
-        ,area:['auto','auto']
-        ,content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">' + img + '</div>'
-        //,content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;"><br><img src="' + obj.data.img + '" style="display:block;"/><br></div>'
-        //,content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">你知道吗？亲！<br>layer ≠ layui<br><br>layer只是作为Layui的一个弹层模块，由于其用户基数较大，所以常常会有人以为layui是layerui<br><br>layer虽然已被 Layui 收编为内置的弹层模块，但仍然会作为一个独立组件全力维护、升级。<br><br>我们此后的征途是星辰大海 ^_^</div>'
-        ,btn: '关闭'
-        ,btnAlign: 'c'
-      });
+    if (obj.event === 'finishSendStatus') {
+      layer.msg("finishSendStatus");
+      // 发起订单状态变更请求
+        // 成功，弹出消息，更新单元格显示，更新操作单元格
+    } 
+    else if (obj.event === 'finishReturnStatus') {
+      layer.msg("finishReturnStatus");
+      // 发起订单状态变更请求
+        // 成功，弹出消息，更新单元格显示，更新操作单元格
     }
   });
 
   // 监听筛选
-  form.on('submit(orderFilterSubmit)', function(obj) {
-    console.log(obj);
-    layer.msg("筛选状态为：" + obj.field.orderStatus + " 的订单");
-    return false;
-  });
-  
-  var $ = layui.$;
-  
+  // form.on('submit(orderFilterSubmit)', function(obj) {
+  //   // console.log(obj);
+  //   // layer.msg("筛选状态为：" + obj.field.orderStatus + " 的订单");
+  //   active['re']
+  //   // $.ajax(apiUrl.searchOrder, {
+  //   //   type: 'get'
+  //   //   ,data: obj.field
+  //   //   ,success: function() {
+
+  //   //   }
+  //   // })
+  //   return false;
+  // });
+  var active = {
+    reload: function(){
+      var orderStatus = $('#orderStatusSelect');
+      //执行重载
+      table.reload('orderTable', {
+        page: {
+          curr: 1 //重新从第 1 页开始
+        }
+        ,where: {
+          orderStatus: orderStatus.val()
+        }
+      });
+    }
+  }
   $('.demoTable .layui-btn').on('click', function(){
     var type = $(this).data('type');
     active[type] ? active[type].call(this) : '';
@@ -162,16 +173,13 @@ layui.use(['table', 'form'], function(){
 </script>
 <script type="text/html" id="toolBar">
   {{# if (d.orderStatus === "未发货") { }}
-    <a class="layui-btn layui-btn-xs" lay-event="edit">确认发货</a>
+    <a class="layui-btn layui-btn-xs" lay-event="finishSendStatus">确认发货</a>
   {{# } }}
 
   {{# if (d.orderStatus === "申请退货") { }}
-    <a class="layui-btn layui-btn-xs" lay-event="edit">同意退货</a>
+    <a class="layui-btn layui-btn-xs" lay-event="finishReturnStatus">同意退货</a>
   {{# } }}
 
-  {{# if (d.orderStatus === "申请换货") { }}
-    <a class="layui-btn layui-btn-xs" lay-event="edit">同意换货</a>
-  {{# } }}
 </script>
 
 <script type="text/html" id="viewImgTpl">

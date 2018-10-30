@@ -90,10 +90,22 @@
 
 //JavaScript代码区域
 layui.use(['table', 'form', 'laytpl', 'upload'], function(){
+  var $ = layui.$;
   var table = layui.table;
   var form = layui.form;
   var laytpl = layui.laytpl;
   var upload = layui.upload;
+
+  function initSearchBookTypeSelect() {
+      var selectType = $('#searchBookType');
+      bookTypes.forEach(function(value, index, array){
+          var option = $("<option>").val(value.typeCode).text(value.description);
+          selectType.append(option);
+          });
+      form.render('select', 'searchBookForm');
+  }
+  
+  initSearchBookTypeSelect();   
 
   // 初始化图片上传
   // config成员：
@@ -137,8 +149,15 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
     if(obj.event === 'del'){
       // 弹出询问框
       layer.confirm('你真的下架这本书吗？', function(index){
-        obj.del();
         layer.close(index);
+        $.ajax(apiUrl.deleteBook, {
+          type: 'post'
+          ,data: {bookId: data.bookId}
+          ,success: function(){obj.del();}
+          ,error: function() {
+            layer.msg('下架失败，请稍后重试');
+          }
+        })
       });
     } 
     // 编辑按钮按下
@@ -240,7 +259,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
       ,{field:'img', title: '书籍封面', width:120, templet:'#viewImgTpl'}
       ,{field:'bookName', title: '书籍名', width:150, sort: true}
       ,{field:'bookAuthor', title: '作者', width:130, sort: true}
-      ,{field:'bookType', title: '书籍类型', width:100}
+      ,{field:'bookType', title: '书籍类型', width:100, templet:'#bookTypeTpl'}
       ,{field:'bookPrice', title: '单价', sort: true, width:80}
       ,{field:'bookIntroduce', title: '简介'}
       ,{fixed:'right', title:'操作', toolbar: '#barDemo', width:200}
@@ -250,17 +269,17 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
     ,height: 'auto'
   });
   
-  var $ = layui.$, active = {
+  var active = {
     reload: function(){
       var bookName = $('#searchBookName');
-      var bookTyep = $('#searchBookType');
+      var bookType = $('#searchBookType');
       //执行重载
       table.reload('bookTable', {
         page: {
           curr: 1 //重新从第 1 页开始
         }
         ,where: {
-          bookType: bookTyep.val()
+          bookType: bookType.val()
           ,bookName: bookName.val()
         }
       });
@@ -303,12 +322,22 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
           var submit=$("#addSubmit");
           form.on('submit(addBookSubmit)', function(data){
             var loadIndex = layer.load(2);
-            // 提交操作，后期应该换成ajax
-            setTimeout(function(){
-                layer.close(loadIndex);
-                layer.msg("上架成功", {icon: 1, time: 1000});
-              }, 1500)
             layer.close(index);
+            $.ajax(apiUrl.addBook, {
+              data: data.field
+              ,type: 'post'
+              ,success: function(data) {
+                layer.close(loadIndex);
+                // 数据表格重载
+                active['reload'].call(this);
+                layer.msg("上架成功", {icon: 1, time: 1000});
+              }
+              ,error: function(data) {
+                layer.close(loadIndex);
+                layer.msg('上架失败，请稍后重试');
+              }
+            })
+            
             return false;
           })
           submit.trigger('click');
@@ -332,7 +361,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
 <script type="text/html" id="viewImgTpl">
   <div>
     <div style="text-align:center" lay-event="viewImg">
-      <img src="{{ d.img }}">
+      <img src="{{apiBasePath + d.img }}">
     </div>
   </div>
 </script>
@@ -340,10 +369,15 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
 <script type="text/html" id="viewRawImgTpl">
   <div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">
     <div style="text-align:center">
-      <img id="rawImg" src="{{ d.img }}" style="max-height: 460px">
+      <img id="rawImg" src="{{apiBasePath + d.img }}" style="max-height: 460px">
     </div>
     <button type="button" class="layui-btn layui-hide" id="uploadImg">上传图片</button>
   </div>
+</script>
+
+<script type="text/html" id="bookTypeTpl">
+  {{# var description = findBookTypeDescription(d.bookType); }}
+  {{ description }}
 </script>
 
 <!-- 书籍信息编辑模板 -->
@@ -428,7 +462,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
       </div>
       <div class="layui-form-item">
         <label class="layui-form-label">图书封面</label>
-        <input id="bookImg" class="layui-hide" type="text" lay-verify="required" name="bookImg" placeholder="例如：44.00" autocomplete="off" class="layui-input">
+        <input id="bookImg" class="layui-hide" type="text" lay-verify="required" name="img" placeholder="例如：44.00" autocomplete="off" class="layui-input">
         <div class="layui-upload layui-input-block">
           <div class="layui-upload-list">
             <img class="layui-upload-img" id="rawImg" style="width:96px; height:96px">

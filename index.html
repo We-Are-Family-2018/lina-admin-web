@@ -181,7 +181,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
             selectType.append(option);
             });
           // 选中当前图书类型
-          var typeCode = findBookTypeCode(data.bookType);
+          var typeCode = data.bookType;
           selectType.val(typeCode);
           // 重渲染
           form.render('select', 'editBookForm');
@@ -189,14 +189,16 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
         ,yes: function(index, layero) {
           var submit = $("#editSubmit");
           form.on('submit(editBookSubmit)', function(data){
+            var field = data.field;
             console.log(data);
             var loadIndex = layer.load(2);
             layer.close(index);
             $.ajax(apiUrl.updateBook, {
-              data: data.field
+              data: field
               ,type: 'post'
               ,success: function(data) {
                 layer.close(loadIndex);
+                obj.update(field);
                 layer.msg("提交成功", {icon: 1, time: 1000});
               }
               ,error: function(data) {
@@ -251,7 +253,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
   //方法级渲染
   var bookTable = table.render({
     elem: '#LAY_table_book'
-    ,url: 'data/book.json'
+    ,url: apiUrl.searchBook
     ,title: '商品数据表'
     ,cols: [[
       // {checkbox: true, fixed: true}
@@ -387,6 +389,7 @@ layui.use(['table', 'form', 'laytpl', 'upload'], function(){
         <div class="layui-form-item">
           <label class="layui-form-label">书籍编号:</label>
           <label class="layui-form-mid">{{ d.bookId }}</label>
+          <input type="text" name="bookId" value="{{ d.bookId }}" autocomplete="off" class="layui-input layui-hide" lay-verify="required">
         </div>
         <div class="layui-form-item">
           <label class="layui-form-label">书籍名:</label>

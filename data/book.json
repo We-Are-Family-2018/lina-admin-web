@@ -2,7 +2,7 @@
 	"code": 0,
 	"msg": "",
 	"count": 1000,
-	"/static": [{
+	"data": [{
 		"bookId": 1,
 		"bookName": "Java从入门到放弃",
 		"bookAuthor": "曼蒂柯怡斯基",

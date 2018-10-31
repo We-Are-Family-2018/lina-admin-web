@@ -72,11 +72,12 @@ var apiUrl = {
     //  msg：发生异常时提示用的消息
     //  count：数据总数量（用于表格分页）
     //  data：结果数据集
-    searchBook: 'data/book.json'
+    // searchBook: 'data/book.json'
+    searchBook: 'http://localhost:8080/managerWeb/searchBook'
     ,imgUpload: 'http://localhost:8080/managerWeb/uploadBookImg'
     ,updateBook: 'http://localhost:8080/managerWeb/updateBook'
     ,addBook: 'http://localhost:8080/managerWeb/addBook'
     ,deleteBook: 'http://localhost:8080/managerWeb/deleteBook'
-    ,searchOrder: ''
+    ,searchOrder: 'http://localhost:8080/managerWeb/searchOrder'
     ,updateOrder: ''
 }

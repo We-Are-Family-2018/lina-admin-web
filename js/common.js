@@ -68,6 +68,16 @@ var orderStatus = [
     }
 ]
 
+function findOrderStatusDescription(code) {
+    var description = '';
+    orderStatus.forEach(function(value, index, array){
+        if (value.code == code) {
+            description = value.description;
+        }
+    });
+    return description;
+}
+
 function findOrderStatusCode(description) {
     var code = '';
     orderStatus.forEach(function(value, index, array){

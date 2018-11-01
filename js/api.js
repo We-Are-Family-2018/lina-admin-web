@@ -79,5 +79,6 @@ var apiUrl = {
     ,addBook: 'http://localhost:8080/managerWeb/addBook'
     ,deleteBook: 'http://localhost:8080/managerWeb/deleteBook'
     ,searchOrder: 'http://localhost:8080/managerWeb/searchOrder'
-    ,updateOrder: ''
+    ,updateOrderStatus: 'http://localhost:8080/managerWeb/updateOrderStatus'
+    ,searchUser: 'http://localhost:8080/managerWeb/searchUser'
 }
